@@ -2,6 +2,8 @@ import java.awt.*;
 import java.util.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -9,7 +11,7 @@ import java.awt.event.MouseMotionListener;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 
-public class PathfindingVisualizer extends JFrame implements ActionListener{
+public class PathfindingVisualizer extends JFrame implements ActionListener,ItemListener{
     public static void main(String[] args) {
         new PathfindingVisualizer();
     }
@@ -17,6 +19,8 @@ public class PathfindingVisualizer extends JFrame implements ActionListener{
     private int cells=20;
 
     private final int mapSize=600;
+    private int cSize=mapSize/cells;
+    private int tool; //stores which tool selected(from checkboxes)
 
     JPanel panel;
     JButton startButton,resetButton,generateButton,clearButton;
@@ -26,10 +30,14 @@ public class PathfindingVisualizer extends JFrame implements ActionListener{
     CheckboxGroup Checkgrp;
     Checkbox StartCB,FinishCB,WallCB,EraserCB;
     Map canvas;
+    Node map[][];
 
     public PathfindingVisualizer(){
+        
+        this.clearMap();
 
         this.initial();
+        
         
 
     }
@@ -63,7 +71,7 @@ public class PathfindingVisualizer extends JFrame implements ActionListener{
 
 
         Checkgrp = new CheckboxGroup();
-        StartCB = new Checkbox("Start",Checkgrp,false);
+        StartCB = new Checkbox("Start",Checkgrp,true);
         FinishCB = new Checkbox("Finish",Checkgrp,false);
         WallCB = new Checkbox("Wall",Checkgrp,false);
         EraserCB = new Checkbox("Eraser",Checkgrp,false);
@@ -97,7 +105,14 @@ public class PathfindingVisualizer extends JFrame implements ActionListener{
 		getContentPane().add(canvas);
 
 
+        StartCB.addItemListener(this);
+        FinishCB.addItemListener(this);
+        WallCB.addItemListener(this);
+        EraserCB.addItemListener(this);
 
+        startButton.addActionListener(this);
+        resetButton.addActionListener(this);
+        clearButton.addActionListener(this);
 
     
         panel.add(startButton);
@@ -125,56 +140,190 @@ public class PathfindingVisualizer extends JFrame implements ActionListener{
         setVisible(true);
 
     }
+    int startx,starty,finishx,finishy;
+
+    public void clearMap(){
+        startx=-1;
+        starty=-1;
+        finishx=-1;
+        finishy=-1;
+        map=new Node[cells][cells];//cells-length of the map panel
+        for(int i=0;i<cells;i++){
+            for(int j=0;j<cells;j++){
+                map[i][j]=new Node(3, i, j);
+            }
+        }
+    }
+    public void resetMap() {	//RESET MAP
+		for(int x = 0; x < cells; x++) {
+			for(int y = 0; y < cells; y++) {
+				Node current = map[x][y];
+				if(current.cellType == 4 || current.cellType == 5)	//checked,finalpath
+					map[x][y] = new Node(3,x,y);	//back emptynode
+			}
+		}
+		if(startx > -1 && starty > -1) {	//reset strt,finsh
+			map[startx][starty] = new Node(0,startx,starty);
+			map[startx][starty].hops=0;
+		}
+		if(finishx > -1 && finishy > -1)
+			map[finishx][finishy] = new Node(1,finishx,finishy);
+		reset();	
+	}
+    public void reset() {	//reset
+		solving = false;
+		length = 0;
+		checks = 0;
+	}
+    private boolean solving;
+    private int length,checks;
+    public void Update(){
+        cSize = mapSize/cells;
+		canvas.repaint();
+    }
 
     
     public void actionPerformed(ActionEvent e) {
         //actions
-    }
-}
 
-class Map extends JPanel implements MouseListener,MouseMotionListener{
-    public Map(){
-        addMouseListener(this);
-        addMouseMotionListener(this);
-    }
-    public void paintComponent(Graphics g){
-        super.paintComponent(g);
 
     }
+    
+    public void itemStateChanged(ItemEvent e) {
+        if(StartCB.getState()==true) tool=0;
+        else if(FinishCB.getState()==true) tool=1;
+        else if(WallCB.getState()==true) tool=2;
+        else if(EraserCB.getState()==true) tool=3;
+    }
+    class Map extends JPanel implements MouseListener,MouseMotionListener{
+        public Map(){
+            addMouseListener(this);
+            addMouseMotionListener(this);
+        }
+        public void paintComponent(Graphics g){
+            super.paintComponent(g);
+            for(int x=0;x<cells;x++){
+                for(int y=0;y<cells;y++){
+                    switch (map[x][y].cellType) {
+                        case 0:
+                            g.setColor(Color.BLUE);
+                            break;
+                        case 1:
+                            g.setColor(Color.RED);
+                            break;
+                        case 2:
+                            g.setColor(Color.BLACK);
+                            break;
+                        case 3:
+                            g.setColor(Color.WHITE);
+                            break;
+                        case 4:
+                            g.setColor(Color.CYAN);
+                            break;
+                        case 5:
+                            g.setColor(Color.YELLOW);
+                            break;
+                        
+                    }
+                    g.fillRect(x*cSize, y*cSize, cSize, cSize);
+                    g.setColor(Color.BLACK);
+                    g.drawRect(x*cSize, y*cSize, cSize, cSize);
 
+                }
+            }
+    
+        }
+    
+    
+        public void mousePressed(MouseEvent e) {
+            resetMap();
+            try{
+                int x= e.getX()/cSize;
+                int y= e.getY()/cSize;
+                Node current = map[x][y];
+                switch (tool) {
+                    case 0:
+                        if(current.cellType!=2){
+                            if(startx>-1 && starty>-1){
+                                map[startx][starty].cellType=3;
+                                map[startx][starty].hops=-1;
 
+                            }
+                            current.hops=0;
+                            startx = x;
+                            starty = y;
+                            current.cellType=0;
+                        }
+                        break;
 
-    public void mouseDragged(MouseEvent e) {
+                    case 1:
+                        if (current.cellType!=2) {
+                            if(finishx>-1 && finishy>-1){
+                                map[finishx][finishy].cellType=3;
+                                
+                            }
+                            finishx=x;
+                            finishy=y;
+                            current.cellType=1;
+                        }
+
+                        break;
+                
+                    default:
+                        if (current.cellType!=0 && current.cellType!=1) {
+                            current.cellType=tool;
+                            
+                        }
+                        break;
+                }
+                Update();
+
+            }catch(Exception exc){}
+
+        }
+    
+        public void mouseDragged(MouseEvent e) {
+            
+        }
+    
+    
+        public void mouseMoved(MouseEvent e) {
+           
+        }
+    
+    
+        public void mouseClicked(MouseEvent e) {
+            
+        }
+    
+    
         
+    
+        public void mouseReleased(MouseEvent e) {
+           
+        }
+    
+    
+        public void mouseEntered(MouseEvent e) {
+            
+        }
+    
+    
+        public void mouseExited(MouseEvent e) {
+            
+        }
     }
-
-
-    public void mouseMoved(MouseEvent e) {
-       
+    class Node{
+        private int cellType=0,hops,x,y,lastX,lastY;
+		
+        public Node(int cellType, int x, int y){
+            this.cellType = cellType; // 0-start 1-finish 2-wall 3-empty 4-checked 5-finalpath
+            this.x=x;
+            this.y=y;
+            hops=-1;
+        }
     }
+    
+    
 
-
-    public void mouseClicked(MouseEvent e) {
-        
-    }
-
-
-    public void mousePressed(MouseEvent e) {
-        
-    }
-
-
-    public void mouseReleased(MouseEvent e) {
-       
-    }
-
-
-    public void mouseEntered(MouseEvent e) {
-        
-    }
-
-
-    public void mouseExited(MouseEvent e) {
-        
-    }
 }
