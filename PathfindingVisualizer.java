@@ -177,7 +177,7 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
 	}
     private boolean solving;
     private int length,checks;
-    public void Update(){
+    public void UpdatePaint(){
         cSize = mapSize/cells;
 		canvas.repaint();
     }
@@ -276,14 +276,24 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
                         }
                         break;
                 }
-                Update();
+                UpdatePaint();
 
             }catch(Exception exc){}
 
         }
     
         public void mouseDragged(MouseEvent e) {
-            
+            try{
+                int x= e.getX()/cSize;
+                int y= e.getY()/cSize;
+                Node current = map[x][y];
+                if (tool==1||tool==2) {
+                    current.cellType=tool;
+                }
+                UpdatePaint();
+
+
+            }catch(Exception exc){}
         }
     
     
