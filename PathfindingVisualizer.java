@@ -433,17 +433,17 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
         
           
 
-        public ArrayList<Node> exploreNeighbors(Node current, int hops) {	//EXPLORE NEIGHBORS
-			ArrayList<Node> explored = new ArrayList<Node>();	//LIST OF NODES THAT HAVE BEEN EXPLORED
+        public ArrayList<Node> exploreNeighbors(Node current, int hops) {	//to explore neighbors
+			ArrayList<Node> explored = new ArrayList<Node>();	
 			for(int a = -1; a <= 1; a++) {
 				for(int b = -1; b <= 1; b++) {
 					int xbound = current.x+a;
 					int ybound = current.y+b;
-					if((xbound > -1 && xbound < cells) && (ybound > -1 && ybound < cells)) {	//MAKES SURE THE NODE IS NOT OUTSIDE THE GRID
+					if((xbound > -1 && xbound < cells) && (ybound > -1 && ybound < cells)) {	
 						Node neighbor = map[xbound][ybound];
-						if((neighbor.hops==-1 || neighbor.hops > hops) && neighbor.cellType!=2) {	//CHECKS IF THE NODE IS NOT A WALL AND THAT IT HAS NOT BEEN EXPLORED
-							explore(neighbor, current.x, current.y, hops);	//EXPLORE THE NODE
-							explored.add(neighbor);	//ADD THE NODE TO THE LIST
+						if((neighbor.hops==-1 || neighbor.hops > hops) && neighbor.cellType!=2) {	//not a wall or not explored
+							explore(neighbor, current.x, current.y, hops);	
+							explored.add(neighbor);	
 						}
 					}
 				}
@@ -451,21 +451,21 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
 			return explored;
 		}
 		
-		public void explore(Node current, int lastx, int lasty, int hops) {	//EXPLORE A NODE
-			if(current.cellType!=0 && current.cellType != 1)	//CHECK THAT THE NODE IS NOT THE START OR FINISH
-				current.cellType=4;	//SET IT TO EXPLORED
-			current.setLastNode(lastx, lasty);	//KEEP TRACK OF THE NODE THAT THIS NODE IS EXPLORED FROM
-			current.hops=hops;	//SET THE HOPS FROM THE START
+		public void explore(Node current, int lastx, int lasty, int hops) {	
+			if(current.cellType!=0 && current.cellType != 1)	
+				current.cellType=4;	//explored
+			current.setLastNode(lastx, lasty);	
+			current.hops=hops;	
 			checks++;
-			if(current.cellType == 1) {	//IF THE NODE IS THE FINISH THEN BACKTRACK TO GET THE PATH
+			if(current.cellType == 1) {	//finish then backtrack
 				backtrack(current.lastX, current.lastY,hops);
                 
 			}
 
 		}
-        public void backtrack(int lx, int ly, int hops) {	//BACKTRACK
+        public void backtrack(int lx, int ly, int hops) {	
 			length = hops;
-			while(hops > 1) {	//BACKTRACK FROM THE END OF THE PATH TO THE START
+			while(hops > 1) {	//end to start
 				Node current = map[lx][ly];
 				current.cellType=5;
                 
