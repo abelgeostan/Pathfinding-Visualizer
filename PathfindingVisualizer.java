@@ -1,5 +1,7 @@
 import java.awt.*;
 import java.util.*;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -48,26 +50,26 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
         setLayout(null);
 
         panel=new JPanel();
-        //panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED),"Controls"));
-        panel.setBounds(0,10,200,600);
+        
+        panel.setBounds(0,10,230,630);
         panel.setLayout(null);
         add(panel);
         panel.setBackground(Color.LIGHT_GRAY);
-        // panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        
 
         startButton = new JButton("Start Search");
-        startButton.setBounds(30,50,120,40);
+        startButton.setBounds(45,50,140,40);
         resetButton = new JButton("Reset");
-        resetButton.setBounds(30,100,120,40);
-        //generateButton = new JButton("Generate Map");
+        resetButton.setBounds(45,100,140,40);
+        
         clearButton = new JButton("Clear Map");
-        clearButton.setBounds(30,150,120,40);
+        clearButton.setBounds(45,150,140,40);
     
-        String[] algorithms = {"Dijkstra", "A*"};
+        String[] algorithms = {"Dijkstra"};
         algL=new JLabel("Algorithms");
-        algL.setBounds(30,200,120,25);
+        algL.setBounds(45,200,140,25);
         algorithmComboBox = new JComboBox<>(algorithms);
-        algorithmComboBox.setBounds(30,225,120,30);
+        algorithmComboBox.setBounds(45,225,140,30);
 
 
         Checkgrp = new CheckboxGroup();
@@ -76,18 +78,14 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
         WallCB = new Checkbox("Wall",Checkgrp,false);
         EraserCB = new Checkbox("Eraser",Checkgrp,false);
         toolL = new JLabel("Tools");                                      
-        toolL.setBounds(30,275,120,25);
-        StartCB.setBounds(30,300,50,25);
-        FinishCB.setBounds(100,300,50,25);
-        WallCB.setBounds(30,325,50,25);
-        EraserCB.setBounds(100,325,50,25);
+        toolL.setBounds(45,275,120,25);
+        StartCB.setBounds(45,300,50,25);
+        FinishCB.setBounds(115,300,50,25);
+        WallCB.setBounds(45,325,50,25);
+        EraserCB.setBounds(115,325,50,25);
         
 
     
-        // String[] tools = {"Start", "Finish", "Wall", "Eraser"};
-        
-        // toolComboBox = new JComboBox<>(tools);                       VENDA ig
-        // toolComboBox.setBounds(30,300,120,30);
         
         gridSlideL =new JLabel("Grid:");
         gridSlideL.setBounds(10,365,40,25);
@@ -99,7 +97,7 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
         speedSlider = new JSlider(0, 100, 50);
         speedSlider.setBounds(55,400,100,25);
         speedSlider.setBackground(Color.LIGHT_GRAY);
-        //densitySlider = new JSlider(0, 100, 30);
+        
         canvas= new Map();
         canvas.setBounds(230, 10, mapSize+1, mapSize+1);
 		getContentPane().add(canvas);
@@ -117,23 +115,24 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
     
         panel.add(startButton);
         panel.add(resetButton);
-        //panel.add(generateButton);   venda ig
+          
         panel.add(clearButton);
         panel.add(algL);
         panel.add(algorithmComboBox);
         panel.add(toolL);
-        // panel.add(toolComboBox);
+        
         panel.add(StartCB);
         panel.add(FinishCB);
         panel.add(WallCB);
         panel.add(EraserCB);
-        panel.add(gridSlideL);
-        panel.add(gridSizeSlider);
-        panel.add(speedSlideL);
-        panel.add(speedSlider);
+        // panel.add(gridSlideL);
+        // panel.add(gridSizeSlider);// future add
+        // panel.add(speedSlideL);
+        // panel.add(speedSlider);
+        StartCB.setForeground(Color.RED);
 
 
-        //panel.add(densitySlider);   venda ig
+        
 
 
 
@@ -181,19 +180,55 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
         cSize = mapSize/cells;
 		canvas.repaint();
     }
+    
 
     
     public void actionPerformed(ActionEvent e) {
         //actions
+        if (e.getSource()==startButton) {
+            reset();
+            if (startx >-1 && starty >-1 && finishx >-1 && finishy >-1) {
+                solving=true;
+                new Algorithm().Dijkstra();
+            }
+        }
+        if (e.getSource()==resetButton) {
+            resetMap();
+            solving=false;
+            UpdatePaint();
+        }
+        if (e.getSource()==clearButton) {
+            clearMap();
+            solving=false;
+            UpdatePaint();
+        }
 
 
     }
     
+    
+    
     public void itemStateChanged(ItemEvent e) {
-        if(StartCB.getState()==true) tool=0;
-        else if(FinishCB.getState()==true) tool=1;
-        else if(WallCB.getState()==true) tool=2;
-        else if(EraserCB.getState()==true) tool=3;
+        StartCB.setForeground(Color.BLACK);
+        FinishCB.setForeground(Color.BLACK);
+        WallCB.setForeground(Color.BLACK);
+        EraserCB.setForeground(Color.BLACK);
+        if(StartCB.getState()==true) {
+            tool=0;
+            StartCB.setForeground(Color.RED);
+        }
+        else if(FinishCB.getState()==true){
+            tool=1;
+            FinishCB.setForeground(Color.RED);
+        }
+        else if(WallCB.getState()==true) {
+            tool=2;
+            WallCB.setForeground(Color.RED);
+        }
+        else if(EraserCB.getState()==true) {
+            tool=3;
+            EraserCB.setForeground(Color.RED);
+        }
     }
     class Map extends JPanel implements MouseListener,MouseMotionListener{
         public Map(){
@@ -278,7 +313,9 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
                 }
                 UpdatePaint();
 
-            }catch(Exception exc){}
+            }catch(Exception exc){
+                System.out.println(exc);
+            }
 
         }
     
@@ -287,13 +324,15 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
                 int x= e.getX()/cSize;
                 int y= e.getY()/cSize;
                 Node current = map[x][y];
-                if (tool==1||tool==2) {
+                if (tool==3||tool==2 && (current.cellType!=0 && current.cellType!=1)) {
                     current.cellType=tool;
                 }
                 UpdatePaint();
 
 
-            }catch(Exception exc){}
+            }catch(Exception exc){
+                System.out.println(exc);
+            }
         }
     
     
@@ -322,7 +361,9 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
         public void mouseExited(MouseEvent e) {
             
         }
+        
     }
+    int delay=30; 
     class Node{
         private int cellType=0,hops,x,y,lastX,lastY;
 		
@@ -332,6 +373,109 @@ public class PathfindingVisualizer extends JFrame implements ActionListener,Item
             this.y=y;
             hops=-1;
         }
+        public void setLastNode(int x, int y) {lastX = x; lastY = y;}
+    }
+    class Algorithm{
+        public void Dijkstra() {
+    SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground() {
+            PriorityQueue<Node> priority = new PriorityQueue<>((n1, n2) -> n1.hops - n2.hops);
+            priority.add(map[startx][starty]);
+
+            while (!priority.isEmpty()&&solving==true) {
+                Node current = priority.poll();
+
+                if (current.cellType == 1) { // Path found
+                    backtrack(current.lastX, current.lastY, current.hops);
+                    publish(); 
+                    return null;
+                }
+
+                int hops = current.hops + 1;
+                ArrayList<Node> explored = exploreNeighbors(current, hops);
+
+                for (Node neighbor : explored) {
+                    priority.add(neighbor);
+                }
+
+                publish(); // Update visualization after exploring neighbors
+                try {
+                    Thread.sleep(delay); // Delay to visualize the process gradually
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            solving = false; // No path found
+            publish(); // Update visualization to indicate no path
+            return null;
+        }
+
+        @Override
+        protected void process(List<Void> chunks) {
+            UpdatePaint(); // Update the UI
+        }
+
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+        
+    };
+
+    worker.execute(); // Start the SwingWorker
+}
+        
+          
+
+        public ArrayList<Node> exploreNeighbors(Node current, int hops) {	//EXPLORE NEIGHBORS
+			ArrayList<Node> explored = new ArrayList<Node>();	//LIST OF NODES THAT HAVE BEEN EXPLORED
+			for(int a = -1; a <= 1; a++) {
+				for(int b = -1; b <= 1; b++) {
+					int xbound = current.x+a;
+					int ybound = current.y+b;
+					if((xbound > -1 && xbound < cells) && (ybound > -1 && ybound < cells)) {	//MAKES SURE THE NODE IS NOT OUTSIDE THE GRID
+						Node neighbor = map[xbound][ybound];
+						if((neighbor.hops==-1 || neighbor.hops > hops) && neighbor.cellType!=2) {	//CHECKS IF THE NODE IS NOT A WALL AND THAT IT HAS NOT BEEN EXPLORED
+							explore(neighbor, current.x, current.y, hops);	//EXPLORE THE NODE
+							explored.add(neighbor);	//ADD THE NODE TO THE LIST
+						}
+					}
+				}
+			}
+			return explored;
+		}
+		
+		public void explore(Node current, int lastx, int lasty, int hops) {	//EXPLORE A NODE
+			if(current.cellType!=0 && current.cellType != 1)	//CHECK THAT THE NODE IS NOT THE START OR FINISH
+				current.cellType=4;	//SET IT TO EXPLORED
+			current.setLastNode(lastx, lasty);	//KEEP TRACK OF THE NODE THAT THIS NODE IS EXPLORED FROM
+			current.hops=hops;	//SET THE HOPS FROM THE START
+			checks++;
+			if(current.cellType == 1) {	//IF THE NODE IS THE FINISH THEN BACKTRACK TO GET THE PATH
+				backtrack(current.lastX, current.lastY,hops);
+                
+			}
+
+		}
+        public void backtrack(int lx, int ly, int hops) {	//BACKTRACK
+			length = hops;
+			while(hops > 1) {	//BACKTRACK FROM THE END OF THE PATH TO THE START
+				Node current = map[lx][ly];
+				current.cellType=5;
+                
+				lx = current.lastX;
+				ly = current.lastY;
+				hops--;
+                
+			}
+			solving = false;
+		}
     }
     
     
